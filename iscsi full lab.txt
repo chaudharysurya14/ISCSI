@@ -1,0 +1,99 @@
+USE CENTOS-7 Image
+
+#####on ISCSI CLIENT-#####
+yum install iscsi-initiator-utils
+cd /etc/iscsi/
+cat initiatorname.iscsi # change client name if required
+systemctl restart iscsi
+
+####on ISCSI Server##### 
+
+#add two 20GB HDD in VM
+fdisk -l
+pvcreate /dev/sdc /dev/sdb
+vgcreate vg_iscsi /dev/sdb /dev/sdc
+lvcreate -n lv_iscsi-disk-01 -l 1G vg_iscsi
+lvcreate -n lv_iscsi-disk-01 -L 1G vg_iscsi
+lvs
+
+yum install targetcli
+
+targetcli
+cd backstores/block
+create block1 /dev/mapper/vg_iscsi-lv_iscsi--disk--01
+cd iscsi
+create iqn.2022-12.cdac.acts.hpcsa.sbm:disk1
+cd iqn.2022-12.cdac.acts.hpcsa.sbm:disk1/tpg1/acls
+create iqn.2022-12.acts.student:306631cea220 #client PC iscsi initiator name
+cd iscsi/iqn.2022-12.cdac.acts.hpcsa.sbm:disk1/tpg1/luns
+create /backstores/block/block1
+exit
+systemctl restart target
+systemctl status target
+
+#Please excute on client system
+
+ iscsiadm -m -t st -p 192.168.76.XXX --login #XXX=server ip
+ iscsiadm -m discovery -t st -p 192.168.76.XXX --login #XXX=server IP
+ fdisk -l
+ fdisk /dev/sdx #use X=iscsi mount disk
+ #Press n then enter enter
+ #Press key w 
+ fdisk -l
+ mkdir /mnt/disk-1
+ mkfs.ext4 /dev/sdx1
+ mount /dev/sdh1 /mnt/disk-1/
+
+
+/> ls
+o- / ........................................................................... [...]
+  o- backstores ................................................................ [...]
+  | o- block .................................................... [Storage Objects: 1]
+  | | o- block1  [/dev/mapper/vg_iscsi-lv_iscsi--disk--01 (1.0GiB) write-thru activated]
+  | |   o- alua ..................................................... [ALUA Groups: 1]
+  | |     o- default_tg_pt_gp ......................... [ALUA state: Active/optimized]
+  | o- fileio ................................................... [Storage Objects: 0]
+  | o- pscsi .................................................... [Storage Objects: 0]
+  | o- ramdisk .................................................. [Storage Objects: 0]
+  o- iscsi .............................................................. [Targets: 1]
+  | o- iqn.2022-12.cdac.acts.hpcsa.sbm:disk1 ............................... [TPGs: 1]
+  |   o- tpg1 ................................................. [no-gen-acls, no-auth]
+  |     o- acls ............................................................ [ACLs: 1]
+  |     | o- iqn.2022-12.acts.student:306631cea220 .................. [Mapped LUNs: 1]
+  |     |   o- mapped_lun0 .................................. [lun0 block/block1 (rw)]
+  |     o- luns ............................................................ [LUNs: 1]
+  |     | o- lun0  [block/block1 (/dev/mapper/vg_iscsi-lv_iscsi--disk--01) (default_tg_pt_gp)]
+  |     o- portals ...................................................... [Portals: 1]
+  |       o- 0.0.0.0:3260 ....................................................... [OK]
+  o- loopback ........................................................... [Targets: 0]
+/>
+
+
+  21  yum install tragetcli
+   22  clear
+   23  fdisk -l
+   24  clear
+   25  l
+   26  fdisk -l
+   27  pvcreate /dev/sdc /dev/sdb
+   28  vgcreate vg_iscsi /dev/sdb /dev/sdc
+   29  lvcreate -n lv_iscsi-disk-01 -l 1G vg_iscsi
+   30  lvcreate -n lv_iscsi-disk-01 -L 1G vg_iscsi
+   31  lvs
+   32  yum install tragetcli
+   33  yum install targetcli
+   34  firewall-cmd --permanent --add-port=3260/tcp
+   35  firewall-cmd --reload
+   36  clear
+   37  targetcli
+   38  cat /etc/target/saveconfig.json
+   39  targetcli
+   40  systemctl start target
+   41  systemctl status target
+   42  yum install net-tools
+   43  netstat -atpn
+   44  ip a
+   45  clear
+   46  history
+   47  targetc
+   48  targetcli
